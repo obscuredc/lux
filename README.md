@@ -2,6 +2,8 @@
 it is a stack based programming language. very like assembly themed. only integers are allowed as parameters, so to build "strings" is very annoying. it isn't meant for actual use. it was more for a project. i wouldnt even consider it an esoteric language because it has 0 creativity. 
 ## documentation
 note that the documentation is not consistent with the language - by this I mean when a new command is added, it may take a while for it to be documented.
+#### program exit codes
+`0` means it ended normally. `1` means it includes warnings. `2` means it includes fatal errors. `3` means the program ended it with `end`.
 #### psh
 push a value (`p0`) onto the stack
 #### pop
@@ -38,3 +40,5 @@ outputs the contents of the raw stack without turning into unicode
 outputs the `[lux/log]: dummy`. useful for debug
 #### rev
 reverses the stack, making the top value the bottom one, etc
+#### end
+ends the program
