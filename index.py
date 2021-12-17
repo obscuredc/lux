@@ -152,7 +152,7 @@ class Executor:
         self.cc = None
         self.env = env
         self.endl = False
-        self.code = 0 #0->Success 1->warnings 2->Errors
+        self.code = 0 #0->Success 1->warnings 2->Errors 3-> program ended itself
     def Continue(self):
         self.idx+=1
         self.cc=self.ptokens[self.idx]
@@ -160,13 +160,15 @@ class Executor:
         self.Continue()
         while self.endl is False and self.idx < len(self.ptokens):
             #wow if statments for commands here
+            
             if(self.cc == "EOF"):
                 self.endl = True
                 break
+            #print(f"[lux/log]: running {self.cc.name} on index{self.idx}")
             try:
             #IF STATMENTS FOR COMMANDS VV
-                if(self.cc.name == "HelloWorld"):
-                    print("HelloWorld")
+                if(self.cc.name == "dummy"):
+                    print("[lux/log]: dummy")
                 elif(self.cc.name == "psh"):
                     self.env.stack.append(self.cc.params[0].value)
                 elif(self.cc.name == "pop"):
@@ -185,6 +187,60 @@ class Executor:
                     print(f"[lux/log]: {self.env.textbuffer}")
                 elif(self.cc.name == "rem"):
                     pass
+                elif(self.cc.name == "add"):
+                    t1=self.env.stack.pop()
+                    t2=self.env.stack.pop()
+                    self.env.stack.append(t1+t2)
+                elif(self.cc.name == "sub"):
+                    t1=self.env.stack.pop()
+                    t2=self.env.stack.pop()
+                    self.env.stack.append(t1-t2)
+                elif(self.cc.name == "mul"):
+                    t1=self.env.stack.pop()
+                    t2=self.env.stack.pop()
+                    self.env.stack.append(t1*t2)
+                elif(self.cc.name == "div"):
+                    t1=self.env.stack.pop()
+                    t2=self.env.stack.pop()
+                    self.env.stack.append(t1/t2)
+                elif(self.cc.name == "jmp"):
+                    self.idx = self.cc.params[0].value -2
+                    self.Continue()
+                elif(self.cc.name == "end"):
+                    self.endl = True
+                    self.code = 3
+                elif(self.cc.name == "jmp_eq"):
+                    t1=self.env.stack.pop()
+                    t2=self.env.stack.pop()
+                    if(t1==t2):
+                        self.idx=self.cc.params[0].value -2
+                        self.Continue()
+                elif(self.cc.name == "jmp_ls"):
+                    t1=self.env.stack.pop()
+                    t2=self.env.stack.pop()
+                    if(t1<t2):
+                        self.idx=self.cc.params[0].value -2
+                        self.Continue()
+                elif(self.cc.name == "jmp_leq"):
+                    t1=self.env.stack.pop()
+                    t2=self.env.stack.pop()
+                    if(t1<=t2):
+                        self.idx=self.cc.params[0].value -2
+                        self.Continue()
+                elif(self.cc.name == "out"):
+                    t=""
+                    for N in self.env.stack:
+                        if(N == 0):
+                            break;
+                        else:
+                            t += chr(N)
+                    print("[lux/log]: "+t)
+                elif(self.cc.name == "rev"):
+                    self.env.stack.reverse()
+                elif(self.cc.name == "cpy"):
+                    t=self.env.stack.pop()
+                    self.env.stack.append(t)
+                    self.env.stack.append(t)
                 #IF STATEMENTS FOR COMMANDS ^^
                 elif (self.cc != "EOF"):
                     print(f"[lux/fatal]: command #{str(self.idx)} is unknown")
