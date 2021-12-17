@@ -1,5 +1,7 @@
 # lux
 it is a stack based programming language. very like assembly themed. only integers are allowed as parameters, so to build "strings" is very annoying. it isn't meant for actual use. it was more for a project. i wouldnt even consider it an esoteric language because it has 0 creativity. 
+## to run
+in the future, I will freeze this to an exe once I feel it is complete. for now, you must have python3 installed. first, navigate to the directory where you have `index.py` saved. then run this command: `python3 index.py <NAME OF THE FILE YOU WANT TO RUN IN LUX HERE>`
 ## documentation
 note that the documentation is not consistent with the language - by this I mean when a new command is added, it may take a while for it to be documented.
 #### program exit codes
