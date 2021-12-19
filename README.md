@@ -3,7 +3,7 @@ it is a stack based programming language. very like assembly themed. only intege
 ## to run
 in the future, I will freeze this to an exe once I feel it is complete. for now, you must have python3 installed. first, navigate to the directory where you have `index.py` saved. then run this command: `python3 index.py <NAME OF THE FILE YOU WANT TO RUN IN LUX HERE>`
 ## documentation
-note that the documentation is not consistent with the language - by this I mean when a new command is added, it may take a while for it to be documented. also, if you are having trouble outputting text, look to this website https://r12a.github.io/app-conversion/ , type in your string, then look down to the "decimal" section. those are the values you must push to get the message.
+note that the documentation is not consistent with the language - by this I mean when a new command is added, it may take a while for it to be documented. also, if you are having trouble outputting text, look to this website https://r12a.github.io/app-conversion/ , type in your string, then look down to the "decimal" section. those are the values you must push to get the message. you can include comments using the rem command, although using the # character is better. Here is an example: `#this wont run!!!# psh 10`
 #### program exit codes
 `0` means it ended normally. `1` means it includes warnings. `2` means it includes fatal errors. `3` means the program ended it with `end`.
 #### psh
@@ -44,3 +44,5 @@ outputs the `[lux/log]: dummy`. useful for debug
 reverses the stack, making the top value the bottom one, etc
 #### end
 ends the program
+#### undocumented
+`stk_c`,`stk_cls`,`stk_s`,`stk_len`,`stk_del`,`tbuf_ap`,`tbuf_cls`,`tbuf_rpsh`,`stk_rpr`,`io_word`,`io_num`
