@@ -1,5 +1,4 @@
-import sys, time, random
-from typing import Any
+import sys, random, colored
 # open file
 def Main():
     try:
@@ -9,11 +8,11 @@ def Main():
             parsed = Parse(tokens)
             #repr(parsed)
             program_exit_status = Execute(parsed)
-            print(f"[lux/log]: program terminated with status{str(program_exit_status)}")
+            LuxExit(f"program terminated with status{str(program_exit_status)}")
             # finally, close
             file.close()
     except:
-        print("[lux/fatal]: unknown error (did you provide a file?)")
+        LuxError("unknown error (did you provide a file?)")
 def Unstable():
         with open(sys.argv[1]) as file:
             Text = file.read()
@@ -21,7 +20,7 @@ def Unstable():
             parsed = Parse(tokens)
             #repr(parsed)
             program_exit_status = Execute(parsed)
-            print(f"[lux/log]: program terminated with status{str(program_exit_status)}")
+            LuxExit(f"program terminated with status{str(program_exit_status)}")
             # finally, close
             file.close()
 class TTCommand:
@@ -33,8 +32,15 @@ class TTInt:
     def __init__(self, idx, value):
         self.idx = idx
         self.value = value
-
-
+#colors sometime
+def LuxLog(message):
+    print(f"[lux/{colored.fg('light_blue')}log{colored.attr('reset')}]: {message}")
+def LuxWarn(message):
+    print(f"[lux/{colored.fg('orange_4b')}warn{colored.attr('reset')}]: {message}")
+def LuxError(message):
+    print(f"[lux/{colored.fg('red')}fatal{colored.attr('reset')}]: {message}")
+def LuxExit(message):
+    print(f"[lux/{colored.fg('light_blue')}end{colored.attr('reset')}]: {message}")
 class Lexer:
     def __init__(self, Raw):
         self.Raw = Raw      # raw text
@@ -47,13 +53,17 @@ class Lexer:
         self.AllowedCommandChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_"
         self.AllowedNumberChar = "0123456789"
         self.Whitespace = "\n\t "
+        self.InComment = False
     def Main(self):
         while self.idx < len(self.Raw) and self.endl is False:
-            if(self.cc in self.AllowedCommandChar):
+            if(self.cc in self.AllowedCommandChar and self.InComment is False):
                 self.BuildCommand()
-            elif(self.cc in self.AllowedNumberChar):
+            elif(self.cc in self.AllowedNumberChar and self.InComment is False):
                 self.BuildNumber()
-            elif(self.cc in self.Whitespace):
+            elif(self.cc in self.Whitespace and self.InComment is False):
+                self.Continue()
+            elif(self.cc == "#"):
+                self.InComment = not(self.InComment)
                 self.Continue()
             else:
                 self.Continue()
@@ -91,7 +101,7 @@ class Lexer:
         try:
             self.tokens.append(TTInt(self.idx, int(temp)))
         except:
-            print("lex/fatal: instead of integer value, got unknown")
+            LuxError("instead of integer value, got unknown")
 def Lex(raw):
     lexer = Lexer(raw)
     return lexer.Main()
@@ -141,10 +151,39 @@ def repr(parsed):
                 print("TOKEN.params *none")
         else:
             print("TOKEN EOF")
+class Stack:
+    def __init__(self, id):
+        self.id = id
+        self.R = []
 class Enviorment:
     def __init__(self):
-        self.stack = []
+        self.stack = [] # must be the selected stacks.R
         self.textbuffer = ""
+        self.stacks = []
+
+        self.stacks.append(Stack(0))
+        self.SetStackById(0)
+    def GetStackById(self, id):
+        for Stack in self.stacks:
+            if(Stack.id == id):
+                return Stack
+        return False
+    def SetStackById(self, id):
+        if(self.GetStackById(id) is not False):
+            stack=self.GetStackById(id)
+            self.stack = stack.R 
+        else:
+            LuxLog(f"stack{id} is not a valid stack")
+    def CreateStack(self, id):
+        if self.GetStackById(id) is False:
+            self.stacks.append(Stack(id))
+        else:
+            LuxError(f"there is already a stack of id{id}")
+    def Repr(self):
+        for Stack in self.stacks:
+            LuxLog(f"STACK {str(Stack.id)}:")
+            for value in Stack.R:
+                LuxLog(f"    value: {str(value)}")
 class Executor:
     def __init__(self, ptokens, env):
         self.ptokens = ptokens
@@ -187,6 +226,15 @@ class Executor:
                     print(f"[lux/log]: {self.env.textbuffer}")
                 elif(self.cc.name == "rem"):
                     pass
+                elif(self.cc.name == "tbuf_ap"):
+                    for Value in self.env.stack:
+                        self.env.textbuffer += chr(Value)
+                    self.env.stack = []
+                elif(self.cc.name == "tbuf_rpsh"):
+                    t=self.env.stack.pop()
+                    self.env.textbuffer += str(t)
+                elif(self.cc.name == "tbuf_cls"):
+                    self.env.textbuffer = ""
                 elif(self.cc.name == "add"):
                     t1=self.env.stack.pop()
                     t2=self.env.stack.pop()
@@ -212,18 +260,24 @@ class Executor:
                 elif(self.cc.name == "jmp_eq"):
                     t1=self.env.stack.pop()
                     t2=self.env.stack.pop()
+                    self.env.stack.append(t2)
+                    self.env.stack.append(t1)
                     if(t1==t2):
                         self.idx=self.cc.params[0].value -2
                         self.Continue()
                 elif(self.cc.name == "jmp_ls"):
                     t1=self.env.stack.pop()
                     t2=self.env.stack.pop()
+                    self.env.stack.append(t2)
+                    self.env.stack.append(t1)
                     if(t1<t2):
                         self.idx=self.cc.params[0].value -2
                         self.Continue()
                 elif(self.cc.name == "jmp_leq"):
                     t1=self.env.stack.pop()
                     t2=self.env.stack.pop()
+                    self.env.stack.append(t2)
+                    self.env.stack.append(t1)
                     if(t1<=t2):
                         self.idx=self.cc.params[0].value -2
                         self.Continue()
@@ -234,21 +288,62 @@ class Executor:
                             break;
                         else:
                             t += chr(N)
-                    print("[lux/log]: "+t)
+                    LuxLog(t)
                 elif(self.cc.name == "rev"):
                     self.env.stack.reverse()
                 elif(self.cc.name == "cpy"):
                     t=self.env.stack.pop()
                     self.env.stack.append(t)
                     self.env.stack.append(t)
+                elif(self.cc.name == "stk_s"):
+                    if(self.env.GetStackById(self.cc.params[0].value) is False):
+                        LuxError(f"no stack exists of id{self.cc.params[0].value}")
+                    else:
+                        self.env.SetStackById(self.cc.params[0].value)
+                elif(self.cc.name == "stk_cls"):
+                    self.env.stack = []
+                elif(self.cc.name == "stk_c"):
+                    self.env.CreateStack(self.cc.params[0].value)
+                elif(self.cc.name == "stk_len"):
+                    # self.env.stack.append(len(self.env.stack))
+                    print(len(self.env.stack))
+                elif(self.cc.name == "stk_rpr"):
+                    self.env.Repr()
+                elif(self.cc.name == "stk_del"):
+                    self.env.stacks.pop(self.env.stacks.index(self.env.GetStackById(self.cc.params[0].value)))
+                elif(self.cc.name == "io_word"):
+                    v=input("[lux/cin]: ")
+                    for Char in v:
+                        self.env.stack.append(ord(Char))
+                elif(self.cc.name == "io_num"):
+                    v=input("[lux/cin]: ")
+                    try:
+                        v=int(v)
+                    except:
+                        v=0
+                    self.env.stack.append(v)
+                elif(self.cc.name == "outr"):
+                    t=""
+                    for Num in self.env.stack:
+                        t+=str(Num)
+                    LuxLog(t)
+                elif(self.cc.name == "mpsh"):
+                    for Value in self.cc.params:
+                        self.env.stack.append(Value.value)
+                elif(self.cc.name == "popto"):
+                    t=self.env.stack.pop()
+                    target=self.env.GetStackById(self.cc.params[0].value)
+                    target.R.append(t)
+                elif(self.cc.name == "rand"):
+                    self.env.stack.append(random.randint(0, 100))
                 #IF STATEMENTS FOR COMMANDS ^^
                 elif (self.cc != "EOF"):
-                    print(f"[lux/fatal]: command #{str(self.idx)} is unknown")
+                    LuxError(f"command #{str(self.idx)} is unknown (name={str(self.cc.name)})")
                     self.code = 2
                 if(self.cc != "EOF"):
                     self.Continue()
             except:
-                print("lux/fatal: wrong amount of args applied or internal error")
+                LuxError(f"wrong amount of args applied or internal error at index{self.idx}")
                 self.Continue()
         return self.code
 
