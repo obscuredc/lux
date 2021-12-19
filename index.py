@@ -41,6 +41,9 @@ def LuxError(message):
     print(f"[lux/{colored.fg('red')}fatal{colored.attr('reset')}]: {message}")
 def LuxExit(message):
     print(f"[lux/{colored.fg('light_blue')}end{colored.attr('reset')}]: {message}")
+def LuxCin():
+    e= input(f"[lux/{colored.fg('light_green')}cin{colored.attr('reset')}]: ")
+    return e
 class Lexer:
     def __init__(self, Raw):
         self.Raw = Raw      # raw text
@@ -312,11 +315,11 @@ class Executor:
                 elif(self.cc.name == "stk_del"):
                     self.env.stacks.pop(self.env.stacks.index(self.env.GetStackById(self.cc.params[0].value)))
                 elif(self.cc.name == "io_word"):
-                    v=input("[lux/cin]: ")
+                    v=LuxCin()
                     for Char in v:
                         self.env.stack.append(ord(Char))
                 elif(self.cc.name == "io_num"):
-                    v=input("[lux/cin]: ")
+                    v=LuxCin()
                     try:
                         v=int(v)
                     except:
