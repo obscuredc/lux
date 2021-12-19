@@ -1,12 +1,2 @@
-psh 104
-psh 101
-psh 108
-cpy
-psh 111
-psh 32
-psh 119
-psh 111
-psh 114
-psh 108
-psh 100
+mpsh 104 101 108 108 111 32 119 111 114 108 100
 out
