@@ -45,4 +45,4 @@ reverses the stack, making the top value the bottom one, etc
 #### end
 ends the program
 #### undocumented
-`stk_c`,`stk_cls`,`stk_s`,`stk_len`,`stk_del`,`tbuf_ap`,`tbuf_cls`,`tbuf_rpsh`,`stk_rpr`,`io_word`,`io_num`
+`stk_c`,`stk_cls`,`stk_s`,`stk_len`,`stk_del`,`tbuf_ap`,`tbuf_cls`,`tbuf_rpsh`,`stk_rpr`,`io_word`,`io_num`,`outr`,`mpsh`,`popto`,`rand`
