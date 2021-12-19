@@ -1,0 +1,42 @@
+stk_c 1
+stk_c 2
+stk_s 0
+rand
+lbl 0
+stk_s 1
+stk_cls
+io_num
+stk_s 0
+cpy
+popto 1
+stk_s 1
+goto_ls 1
+rev
+goto_ls 2
+goto_eq 3
+lbl 1
+stk_s 2
+stk_cls
+mpsh 116 104 97 116 32 110 117 109 98 101 114 32 105 115 32 116 111 111 32 104 105 103 104
+tbuf_cls
+tbuf_ap
+tbuf_out
+goto 4
+lbl 2
+stk_s 2
+stk_cls
+mpsh 116 104 97 116 32 110 117 109 98 101 114 32 105 115 32 116 111 111 32 108 111 119
+tbuf_cls
+tbuf_ap
+tbuf_out
+goto 4
+lbl 3
+stk_s 2
+stk_cls
+mpsh 116 104 97 116 32 110 117 109 98 101 114 32 105 115 32 99 111 114 114 101 99 116
+tbuf_cls
+tbuf_ap
+tbuf_out
+end
+lbl 4
+goto 0
