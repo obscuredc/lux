@@ -1,16 +1,15 @@
-import sys, random, colored
-# open file
+import sys, random, colored, keyboard
 def Main():
     try:
         with open(sys.argv[1]) as file:
             Text = file.read()
             tokens = Lex(Text)
             parsed = Parse(tokens)
-            #repr(parsed)
             program_exit_status = Execute(parsed)
             LuxExit(f"program terminated with status{str(program_exit_status)}")
-            # finally, close
             file.close()
+            LuxExit("press [ENTER] to exit")
+            keyboard.wait('enter')
     except:
         LuxError("unknown error (did you provide a file?)")
 def Unstable():
@@ -18,11 +17,13 @@ def Unstable():
             Text = file.read()
             tokens = Lex(Text)
             parsed = Parse(tokens)
-            #repr(parsed)
-            program_exit_status = Execute(parsed)
+            pexexutor = PExecutor(parsed, Enviorment())
+            pex = pexexutor.Main()
+            program_exit_status = Execute(parsed, pex)
             LuxExit(f"program terminated with status{str(program_exit_status)}")
-            # finally, close
             file.close()
+            LuxExit("press [ENTER] to exit")
+            keyboard.wait('enter')
 class TTCommand:
     def __init__(self, idx, parameters, name):
         self.idx = idx
@@ -32,7 +33,6 @@ class TTInt:
     def __init__(self, idx, value):
         self.idx = idx
         self.value = value
-#colors sometime
 def LuxLog(message):
     print(f"[lux/{colored.fg('light_blue')}log{colored.attr('reset')}]: {message}")
 def LuxWarn(message):
@@ -46,13 +46,11 @@ def LuxCin():
     return e
 class Lexer:
     def __init__(self, Raw):
-        self.Raw = Raw      # raw text
-        self.idx = 0          # current index num
-        self.cc = self.Raw[0]       # current char
+        self.Raw = Raw  
+        self.idx = 0         
+        self.cc = self.Raw[0]      
         self.endl = False
         self.tokens = []
-
-        #STR
         self.AllowedCommandChar = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_"
         self.AllowedNumberChar = "0123456789"
         self.Whitespace = "\n\t "
@@ -70,20 +68,8 @@ class Lexer:
                 self.Continue()
             else:
                 self.Continue()
-        #finally add EOF
         self.tokens.append("EOF")
-        #printoutLEX
-        # for Token in self.tokens:
-        #     if(isinstance(Token, TTInt)):
-        #         print(str(Token.value) + " -NUM")
-        #     elif(isinstance(Token, TTCommand)):
-        #         print(Token.name + " -CMD")
-        #     else:
-        #         print("unknown token type")
-
-        #return tokens
         return self.tokens
-
     def Continue(self):
         if self.idx+1 < len(self.Raw):
             self.idx += 1
@@ -158,12 +144,16 @@ class Stack:
     def __init__(self, id):
         self.id = id
         self.R = []
+class Label:
+    def __init__(self, id, ref):
+        self.id = id
+        self.ref = ref
 class Enviorment:
     def __init__(self):
-        self.stack = [] # must be the selected stacks.R
+        self.stack = [] 
         self.textbuffer = ""
         self.stacks = []
-
+        self.labels = []
         self.stacks.append(Stack(0))
         self.SetStackById(0)
     def GetStackById(self, id):
@@ -187,6 +177,13 @@ class Enviorment:
             LuxLog(f"STACK {str(Stack.id)}:")
             for value in Stack.R:
                 LuxLog(f"    value: {str(value)}")
+    def GetLabelById(self, id):
+        for Label in self.labels:
+            if Label.id == id:
+                return Label
+        return False
+    def CreateLabel(self, id, ref):
+        self.labels.append(Label(id, ref))
 class Executor:
     def __init__(self, ptokens, env):
         self.ptokens = ptokens
@@ -201,158 +198,230 @@ class Executor:
     def Main(self):
         self.Continue()
         while self.endl is False and self.idx < len(self.ptokens):
-            #wow if statments for commands here
-            
             if(self.cc == "EOF"):
                 self.endl = True
                 break
-            #print(f"[lux/log]: running {self.cc.name} on index{self.idx}")
-            try:
-            #IF STATMENTS FOR COMMANDS VV
-                if(self.cc.name == "dummy"):
-                    print("[lux/log]: dummy")
-                elif(self.cc.name == "psh"):
-                    self.env.stack.append(self.cc.params[0].value)
-                elif(self.cc.name == "pop"):
-                    self.env.stack.pop()
-                elif(self.cc.name == "vstack"):
-                    t=""
-                    for N in self.env.stack:
-                        t+=str(N) + " "
-                    print(f"[lux/log]: {t}")
-                    t=""
-                elif(self.cc.name == "tbuf_psh"):
-                    t=self.env.stack.pop()
-                    self.env.textbuffer += chr(t)
-                    t=""
-                elif(self.cc.name == "tbuf_out"):
-                    print(f"[lux/log]: {self.env.textbuffer}")
-                elif(self.cc.name == "rem"):
-                    pass
-                elif(self.cc.name == "tbuf_ap"):
-                    for Value in self.env.stack:
-                        self.env.textbuffer += chr(Value)
-                    self.env.stack = []
-                elif(self.cc.name == "tbuf_rpsh"):
-                    t=self.env.stack.pop()
-                    self.env.textbuffer += str(t)
-                elif(self.cc.name == "tbuf_cls"):
-                    self.env.textbuffer = ""
-                elif(self.cc.name == "add"):
-                    t1=self.env.stack.pop()
-                    t2=self.env.stack.pop()
-                    self.env.stack.append(t1+t2)
-                elif(self.cc.name == "sub"):
-                    t1=self.env.stack.pop()
-                    t2=self.env.stack.pop()
-                    self.env.stack.append(t1-t2)
-                elif(self.cc.name == "mul"):
-                    t1=self.env.stack.pop()
-                    t2=self.env.stack.pop()
-                    self.env.stack.append(t1*t2)
-                elif(self.cc.name == "div"):
-                    t1=self.env.stack.pop()
-                    t2=self.env.stack.pop()
-                    self.env.stack.append(t1/t2)
-                elif(self.cc.name == "jmp"):
-                    self.idx = self.cc.params[0].value -2
+            #try:
+            #IF STATEMENTS FOR COMMANDS VV
+            if(self.cc.name == "dummy"):
+                LuxLog("dummy")
+            elif(self.cc.name == "psh"):
+                self.env.stack.append(self.cc.params[0].value)
+            elif(self.cc.name == "pop"):
+                self.env.stack.pop()
+            elif(self.cc.name == "vstack"):
+                t=""
+                for N in self.env.stack:
+                    t+=str(N) + " "
+                LuxLog(t)
+                t=""
+            elif(self.cc.name == "tbuf_psh"):
+                t=self.env.stack.pop()
+                self.env.textbuffer += chr(t)
+                t=""
+            elif(self.cc.name == "tbuf_out"):
+                LuxLog(self.env.textbuffer)
+            elif(self.cc.name == "rem"):
+                pass
+            elif(self.cc.name == "tbuf_ap"):
+                for Value in self.env.stack:
+                    self.env.textbuffer += chr(Value)
+                self.env.stack = []
+            elif(self.cc.name == "tbuf_rpsh"):
+                t=self.env.stack.pop()
+                self.env.textbuffer += str(t)
+            elif(self.cc.name == "tbuf_cls"):
+                self.env.textbuffer = ""
+            elif(self.cc.name == "add"):
+                t1=self.env.stack.pop()
+                t2=self.env.stack.pop()
+                self.env.stack.append(t1+t2)
+            elif(self.cc.name == "sub"):
+                t1=self.env.stack.pop()
+                t2=self.env.stack.pop()
+                self.env.stack.append(t1-t2)
+            elif(self.cc.name == "mul"):
+                t1=self.env.stack.pop()
+                t2=self.env.stack.pop()
+                self.env.stack.append(t1*t2)
+            elif(self.cc.name == "div"):
+                t1=self.env.stack.pop()
+                t2=self.env.stack.pop()
+                self.env.stack.append(t1/t2)
+            elif(self.cc.name == "jmp"):
+                self.idx = self.cc.params[0].value -1
+                self.Continue()
+            elif(self.cc.name == "end"):
+                self.endl = True
+                self.code = 3
+            elif(self.cc.name == "jmp_eq"):
+                t1=self.env.stack.pop()
+                t2=self.env.stack.pop()
+                self.env.stack.append(t2)
+                self.env.stack.append(t1)
+                if(t1==t2):
+                    self.idx=self.cc.params[0].value -1
                     self.Continue()
-                elif(self.cc.name == "end"):
-                    self.endl = True
-                    self.code = 3
-                elif(self.cc.name == "jmp_eq"):
-                    t1=self.env.stack.pop()
-                    t2=self.env.stack.pop()
-                    self.env.stack.append(t2)
-                    self.env.stack.append(t1)
-                    if(t1==t2):
-                        self.idx=self.cc.params[0].value -2
-                        self.Continue()
-                elif(self.cc.name == "jmp_ls"):
-                    t1=self.env.stack.pop()
-                    t2=self.env.stack.pop()
-                    self.env.stack.append(t2)
-                    self.env.stack.append(t1)
-                    if(t1<t2):
-                        self.idx=self.cc.params[0].value -2
-                        self.Continue()
-                elif(self.cc.name == "jmp_leq"):
-                    t1=self.env.stack.pop()
-                    t2=self.env.stack.pop()
-                    self.env.stack.append(t2)
-                    self.env.stack.append(t1)
-                    if(t1<=t2):
-                        self.idx=self.cc.params[0].value -2
-                        self.Continue()
-                elif(self.cc.name == "out"):
-                    t=""
-                    for N in self.env.stack:
-                        if(N == 0):
-                            break;
-                        else:
-                            t += chr(N)
-                    LuxLog(t)
-                elif(self.cc.name == "rev"):
-                    self.env.stack.reverse()
-                elif(self.cc.name == "cpy"):
-                    t=self.env.stack.pop()
-                    self.env.stack.append(t)
-                    self.env.stack.append(t)
-                elif(self.cc.name == "stk_s"):
-                    if(self.env.GetStackById(self.cc.params[0].value) is False):
-                        LuxError(f"no stack exists of id{self.cc.params[0].value}")
+            elif(self.cc.name == "jmp_ls"):
+                t1=self.env.stack.pop()
+                t2=self.env.stack.pop()
+                self.env.stack.append(t2)
+                self.env.stack.append(t1)
+                if(t1<t2):
+                    self.idx=self.cc.params[0].value -1
+                    self.Continue()
+            elif(self.cc.name == "jmp_leq"):
+                t1=self.env.stack.pop()
+                t2=self.env.stack.pop()
+                self.env.stack.append(t2)
+                self.env.stack.append(t1)
+                if(t1<=t2):
+                    self.idx=self.cc.params[0].value -1
+                    self.Continue()
+            elif(self.cc.name == "goto_eq"):
+                t1=self.env.stack.pop()
+                t2=self.env.stack.pop()
+                self.env.stack.append(t2)
+                self.env.stack.append(t1)
+                if(t1==t2  and self.env.GetLabelById(self.cc.params[0].value) != False):
+                    self.idx = self.env.GetLabelById(self.cc.params[0].value).ref - 1
+                    self.Continue()
+                elif(self.env.GetLabelById(self.cc.params[0].value) != False):
+                    pass
+                else:
+                    LuxError(f"could not resolve label of id{str(self.cc.params[0].value)} at index{str(self.idx)} or cmd{str(self.cc.name)}")
+            elif(self.cc.name == "goto_ls"):
+                t1=self.env.stack.pop()
+                t2=self.env.stack.pop()
+                self.env.stack.append(t2)
+                self.env.stack.append(t1)
+                if(t1<t2 and self.env.GetLabelById(self.cc.params[0].value) != False):
+                    self.idx = self.env.GetLabelById(self.cc.params[0].value).ref - 1
+                    self.Continue()
+                elif(self.env.GetLabelById(self.cc.params[0].value) != False):
+                    pass
+                else:
+                    LuxError(f"could not resolve label of id{str(self.cc.params[0].value)} at index{str(self.idx)} or cmd{str(self.cc.name)}")
+            elif(self.cc.name == "goto_leq"):
+                t1=self.env.stack.pop()
+                t2=self.env.stack.pop()
+                self.env.stack.append(t2)
+                self.env.stack.append(t1)
+                if(t1<=t2  and self.env.GetLabelById(self.cc.params[0].value) != False):
+                    self.idx = self.env.GetLabelById(self.cc.params[0].value).ref - 1
+                    self.Continue()
+                elif(self.env.GetLabelById(self.cc.params[0].value) != False):
+                    pass
+                else:
+                    LuxError(f"could not resolve label of id{str(self.cc.params[0].value)} at index{str(self.idx)} or cmd{str(self.cc.name)}")
+            elif(self.cc.name == "out"):
+                t=""
+                for N in self.env.stack:
+                    if(N == 0):
+                        break;
                     else:
-                        self.env.SetStackById(self.cc.params[0].value)
-                elif(self.cc.name == "stk_cls"):
-                    self.env.stack = []
-                elif(self.cc.name == "stk_c"):
-                    self.env.CreateStack(self.cc.params[0].value)
-                elif(self.cc.name == "stk_len"):
-                    # self.env.stack.append(len(self.env.stack))
-                    print(len(self.env.stack))
-                elif(self.cc.name == "stk_rpr"):
-                    self.env.Repr()
-                elif(self.cc.name == "stk_del"):
-                    self.env.stacks.pop(self.env.stacks.index(self.env.GetStackById(self.cc.params[0].value)))
-                elif(self.cc.name == "io_word"):
-                    v=LuxCin()
-                    for Char in v:
-                        self.env.stack.append(ord(Char))
-                elif(self.cc.name == "io_num"):
-                    v=LuxCin()
-                    try:
-                        v=int(v)
-                    except:
-                        v=0
-                    self.env.stack.append(v)
-                elif(self.cc.name == "outr"):
-                    t=""
-                    for Num in self.env.stack:
-                        t+=str(Num)
-                    LuxLog(t)
-                elif(self.cc.name == "mpsh"):
-                    for Value in self.cc.params:
-                        self.env.stack.append(Value.value)
-                elif(self.cc.name == "popto"):
-                    t=self.env.stack.pop()
-                    target=self.env.GetStackById(self.cc.params[0].value)
-                    target.R.append(t)
-                elif(self.cc.name == "rand"):
-                    self.env.stack.append(random.randint(0, 100))
+                        t += chr(N)
+                LuxLog(t)
+            elif(self.cc.name == "rev"):
+                self.env.stack.reverse()
+            elif(self.cc.name == "cpy"):
+                t=self.env.stack.pop()
+                self.env.stack.append(t)
+                self.env.stack.append(t)
+            elif(self.cc.name == "stk_s"):
+                if(self.env.GetStackById(self.cc.params[0].value) is False):
+                    LuxError(f"no stack exists of id{self.cc.params[0].value}")
+                else:
+                    self.env.SetStackById(self.cc.params[0].value)
+            elif(self.cc.name == "stk_cls"):
+                self.env.stack.clear()
+            elif(self.cc.name == "stk_c"):
+                self.env.CreateStack(self.cc.params[0].value)
+            elif(self.cc.name == "stk_len"):
+                # self.env.stack.append(len(self.env.stack))
+                print(len(self.env.stack))
+                LuxWarn("the usage of `stk_len` is still being developed")
+            elif(self.cc.name == "stk_rpr"):
+                self.env.Repr()
+            elif(self.cc.name == "stk_del"):
+                self.env.stacks.pop(self.env.stacks.index(self.env.GetStackById(self.cc.params[0].value)))
+            elif(self.cc.name == "io_word"):
+                v=LuxCin()
+                for Char in v:
+                    self.env.stack.append(ord(Char))
+            elif(self.cc.name == "io_num"):
+                v=LuxCin()
+                try:
+                    v=int(v)
+                except:
+                    v=0
+                self.env.stack.append(v)
+            elif(self.cc.name == "outr"):
+                t=""
+                for Num in self.env.stack:
+                    t+=str(Num)
+                LuxLog(t)
+            elif(self.cc.name == "mpsh"):
+                for Value in self.cc.params:
+                    self.env.stack.append(Value.value)
+            elif(self.cc.name == "popto"):
+                t=self.env.stack.pop()
+                target=self.env.GetStackById(self.cc.params[0].value)
+                target.R.append(t)
+            elif(self.cc.name == "rand"):
+                self.env.stack.append(random.randint(0, 100))
+            elif(self.cc.name == "goto"):
+                #goto label
+                self.idx = self.env.GetLabelById(self.cc.params[0].value).ref - 1
+                self.Continue()
+            elif(self.cc.name == "lbl"):
+                #create label here
+                pass
+            elif(self.cc.name == "lux_env"):
+                for Label in self.env.labels:
+                    print(f"LABEL id{Label.id},ref{Label.ref}")
+            #IF STATEMENTS FOR COMMANDS ^^
+            elif (self.cc != "EOF"):
+                LuxError(f"command #{str(self.idx)} is unknown (name={str(self.cc.name)})")
+                self.code = 2
+            if(self.cc != "EOF"):
+                self.Continue()
+            #except:
+                # LuxError(f"wrong amount of args applied or internal error at index{self.idx}")
+                # self.Continue()
+        return self.code
+class PExecutor:
+    def __init__(self, ptokens, env):
+        self.ptokens = ptokens
+        self.idx = -1
+        self.cc = None
+        self.env = env
+        self.endl = False
+        self.code = 0 #0->Success 1->warnings 2->Errors 3-> program ended itself
+    def Continue(self):
+        self.idx+=1
+        self.cc=self.ptokens[self.idx]
+    def Main(self):
+        self.Continue()
+        while self.endl is False and self.idx < len(self.ptokens):
+            if(self.cc == "EOF"):
+                self.endl = True
+                break
+            try:
+            #IF STATEMENTS FOR COMMANDS VV
+                if(self.cc.name == "lbl"):
+                    #create label here
+                    self.env.CreateLabel(self.cc.params[0].value, self.idx)
                 #IF STATEMENTS FOR COMMANDS ^^
-                elif (self.cc != "EOF"):
-                    LuxError(f"command #{str(self.idx)} is unknown (name={str(self.cc.name)})")
-                    self.code = 2
                 if(self.cc != "EOF"):
                     self.Continue()
             except:
                 LuxError(f"wrong amount of args applied or internal error at index{self.idx}")
                 self.Continue()
-        return self.code
-
-def Execute(parsed_tokens):
+        return self.env
+def Execute(parsed_tokens, pex):
     enviorment = Enviorment()
-    executor = Executor(parsed_tokens, enviorment)
+    executor = Executor(parsed_tokens, pex)
     return executor.Main()
 #Main()     # normal run mode (error catch)
 Unstable() #unstable run mode
